@@ -2,27 +2,41 @@ defmodule Day01 do
     def split_and_parse(file_path) do
         File.stream!(file_path)
             |> Enum.reduce({[], []}, fn line, {acc_1, acc_2} ->
-                parts = line
+                line
                     |> String.trim()
                     |> String.split(~r/\s+/)
                     |> Enum.map(&Integer.parse/1)
                     |> Enum.map(fn {result, _} -> result end)
-
-                first = List.first(parts)
-                second = List.last(parts)
-
-                { [first | acc_1], [second | acc_2] }
+                    |> (fn [a, b] -> { [a | acc_1], [b | acc_2]} end).()
             end)
     end
 
-    def calculate_value({a, b}) do
-        Enum.zip(Enum.sort(a), Enum.sort(b))
-            |> Enum.map(fn {a, b} -> abs(b - a) end)
+    def total_distance(file_path) do
+        {list_l, list_r} = split_and_parse(file_path)
+
+        Enum.zip(Enum.sort(list_l), Enum.sort(list_r))
+            |> Enum.map(fn {left, right} -> abs(right - left) end)
             |> Enum.sum()
+    end
+
+    def similarity_score(file_path) do
+        {list_l, list_r} = split_and_parse(file_path)
+
+        counts = Enum.reduce(list_r, %{}, fn x, acc ->
+            if acc[x] == nil do
+                Map.put(acc, x, 1)
+            else
+                %{acc | x => acc[x] + 1}
+            end
+        end)
+
+        list_l
+        |> Enum.map(fn x -> x * (counts[x] || 0) end)
+        |> Enum.sum()
     end
 end
 
-result = Day01.split_and_parse("input.txt")
-        |> Day01.calculate_value()
-
-IO.inspect(result)
+IO.puts("Part 1 - example: #{Day01.total_distance("example.txt")}")
+IO.puts("Part 1 - input: #{Day01.total_distance("input.txt")}")
+IO.puts("Part 2 - example: #{Day01.similarity_score("example.txt")}")
+IO.puts("Part 2 - input: #{Day01.similarity_score("input.txt")}")

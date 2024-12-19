@@ -39,14 +39,14 @@ defmodule Day06 do
         end
     end
 
-    defp move(map, {y,x}, dir, visited) do
-      {yn, xn} = next_coord({y,x}, dir)
+    defp move(map, pos, dir, visited) do
+      {yn, xn} = next_coord(pos, dir)
 
       if map[yn][xn] == nil do
         visited
       else
         if map[yn][xn] == "#" do
-            move(map, {y,x}, next_dir(dir), visited)
+            move(map, pos, next_dir(dir), visited)
         else
             move(map, {yn,xn}, dir, [{yn,xn} | visited])
         end
@@ -67,12 +67,71 @@ defmodule Day06 do
             |> (fn list -> length(list) end).()
     end
 
-    def part_2(_) do
-        "TBD"
+    defp available_positions(map) do
+        Enum.reduce(map, [], fn {ky, line}, acc ->
+            Enum.reduce(line, acc, fn {kx, position}, acc ->
+               if position in ["#", "^"] do acc else [{ky,kx} | acc] end
+            end)
+          end)
+    end
+
+    defp update_visited(visited, {x,y}, dir) do
+        if visited[{x,y}] == nil do
+            Map.put(visited, {x,y}, [dir])
+        else
+            %{visited | {x,y} => [dir | visited[{x,y}]]}
+        end
+    end
+
+    defp is_repeated?(visited, {x,y}, dir) do
+      Enum.member?(visited[{x,y}] || [], dir)
+    end
+
+    defp stuck_in_loop?(map, obstacle_pos, pos, dir, visited) do
+        {yn, xn} = next_coord(pos, dir)
+        dir_n = if map[yn][xn] == "#" || obstacle_pos == {yn,xn} do next_dir(dir) else dir end
+
+        cond do
+            # guard is exiting the map
+            map[yn][xn] == nil ->
+              false
+            # guard is looping
+            is_repeated?(visited, {yn,xn}, dir_n) ->
+              true
+            # obstacle
+            dir_n != dir ->
+                stuck_in_loop?(map, obstacle_pos, pos, dir_n, update_visited(visited, pos, dir_n))
+            # move
+            true ->
+                stuck_in_loop?(map, obstacle_pos, {yn,xn}, dir, update_visited(visited, {yn,xn}, dir))
+        end
+    end
+
+    def part_2(file_path) do
+        map = read_file(file_path)
+        {yi, xi} = get_start_coords(map)
+        visited = %{{yi,xi} => ["up"]}
+        dir = "up"
+
+        available_positions(map)
+            |> Enum.filter(fn obstacle_pos -> stuck_in_loop?(map, obstacle_pos, {yi, xi}, dir, visited) end)
+            |> (fn list -> length(list) end).()
     end
 end
 
+defmodule Benchmark do
+    def measure(function) do
+      function
+      |> :timer.tc
+      |> elem(0)
+      |> Kernel./(1_000_000)
+    end
+  end
+
 IO.puts("Part 1 - example: #{Day06.part_1("example.txt")}")
 IO.puts("Part 1 - input: #{Day06.part_1("input.txt")}")
-# IO.puts("Part 2 - example: #{Day06.part_2("example.txt")}")
-# IO.puts("Part 2 - input: #{Day06.part_2("input.txt")}")
+IO.puts("Part 2 - example: #{Day06.part_2("example.txt")}")
+
+# TODO - optimize running time
+{time_in_microseconds, ret_val} = :timer.tc(fn -> Day06.part_2("input.txt") end)
+IO.puts("Part 2 - input: #{ret_val} (in #{time_in_microseconds/1000000} seconds)")

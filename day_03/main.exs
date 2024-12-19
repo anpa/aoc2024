@@ -1,26 +1,45 @@
 defmodule Day03 do
-    def split_and_parse(file_path) do
-        File.stream!(file_path)
-            |> Enum.map(&String.trim(&1))
+  require Integer
+    defp read_file(file_path) do
+        File.read!(file_path) |> String.trim()
     end
 
-    def calculate_multiplications(file_path) do
-        split_and_parse(file_path)
-            |> Enum.map(fn x -> Regex.scan(~r/mul\(([0-9]{1,3}),([0-9]{1,3})\)/, x) end)
-            |> List.flatten()
-            |> Enum.chunk_every(3)
-            |> Enum.map(fn [_, first, second] ->
-                String.to_integer(first) * String.to_integer(second)
+    defp multiply(a, b) do
+        String.to_integer(a) * String.to_integer(b)
+    end
+
+    defp calculate_multiplications(input) do
+        Regex.scan(~r/mul\(([0-9]{1,3}),([0-9]{1,3})\)/, input)
+            |> Enum.reduce(0, fn [_, first, second], acc -> acc + multiply(first, second) end)
+    end
+
+    def process_file(file_path) do
+        read_file(file_path)
+            |> calculate_multiplications()
+    end
+
+    # Turns the input into a list of operations i.e. [["do(), input1], ["don't(), input2]]
+    defp split_by_conditionals(input) do
+        String.split(input, ~r/(do\(\)|don't\(\))/, include_captures: true)
+            |> (fn list -> if List.first(list) in ["do()", "don't()"] do list else ["do()" | list] end end).()
+            |> Enum.chunk_every(2)
+    end
+
+    def process_file_with_conditionals(file_path) do
+        read_file(file_path)
+            |> split_by_conditionals()
+            |> Enum.reduce(0, fn [instruction, input], acc ->
+                acc +
+                  case instruction do
+                    "do()" -> calculate_multiplications(input)
+                    "don't()" -> 0
+                    _ -> raise ArgumentError, "Invalid instruction: #{instruction}"
+                  end
               end)
-            |> Enum.sum()
-    end
-
-    def part_2(_) do
-        "TBD"
     end
 end
 
-IO.puts("Part 1 - example: #{Day03.calculate_multiplications("example.txt")}")
-IO.puts("Part 1 - input: #{Day03.calculate_multiplications("input.txt")}")
-#IO.puts("Part 2 - example: #{Day03.part_2("example.txt")}")
-#IO.puts("Part 2 - input: #{Day03.part_2("input.txt")}")
+IO.puts("Part 1 - example: #{Day03.process_file("example1.txt")}")
+IO.puts("Part 1 - input: #{Day03.process_file("input.txt")}")
+IO.puts("Part 2 - example: #{Day03.process_file_with_conditionals("example2.txt")}")
+IO.puts("Part 2 - input: #{Day03.process_file_with_conditionals("input.txt")}")

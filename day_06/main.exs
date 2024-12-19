@@ -53,9 +53,7 @@ defmodule Day06 do
       end
     end
 
-    def part_1(file_path) do
-        map = read_file(file_path)
-
+    defp visited_positions(map) do
         {yi, xi} = get_start_coords(map)
         visited = [{yi,xi}]
         dir = "up"
@@ -64,15 +62,13 @@ defmodule Day06 do
 
         visited
             |> Enum.uniq()
-            |> (fn list -> length(list) end).()
     end
 
-    defp available_positions(map) do
-        Enum.reduce(map, [], fn {ky, line}, acc ->
-            Enum.reduce(line, acc, fn {kx, position}, acc ->
-               if position in ["#", "^"] do acc else [{ky,kx} | acc] end
-            end)
-          end)
+    def part_1(file_path) do
+        map = read_file(file_path)
+
+        visited_positions(map)
+            |> (fn list -> length(list) end).()
     end
 
     defp update_visited(visited, {x,y}, dir) do
@@ -113,7 +109,10 @@ defmodule Day06 do
         visited = %{{yi,xi} => ["up"]}
         dir = "up"
 
-        available_positions(map)
+        # place obstacle in one of the future guard positions
+        # this way we don't need to brute-force positions that are not relevant
+        visited_positions(map)
+            |> Enum.filter(fn x -> x != {yi,xi} end) # exclude start point
             |> Enum.filter(fn obstacle_pos -> stuck_in_loop?(map, obstacle_pos, {yi, xi}, dir, visited) end)
             |> (fn list -> length(list) end).()
     end

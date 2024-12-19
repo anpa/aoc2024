@@ -17,7 +17,7 @@ defmodule Day05 do
             end).()
     end
 
-    def is_update_invalid(update, rules) do
+    defp is_update_invalid(update, rules) do
         update
             |> String.split(",")
             |> Enum.any?(fn val ->
@@ -30,17 +30,28 @@ defmodule Day05 do
             end)
     end
 
-    def get_correct_updates({rules, updates}) do
+    defp fix_update(update, rules) do
+        update
+            |> String.split(",")
+            |> Enum.sort(&(Enum.member?(rules[&1] || [], &2)))
+            |> Enum.join(",")
+    end
+
+    defp get_correct_updates({rules, updates}) do
         updates
             |> Enum.reject(&is_update_invalid(&1, rules))
     end
 
-    def get_middle_page(update) do
+    defp get_incorrect_updates({rules, updates}) do
+        updates
+            |> Enum.filter(&is_update_invalid(&1, rules))
+    end
+
+    defp get_middle_page(update) do
         list = String.split(update, ",")
         middle_index = list |> length() |> div(2)
         Enum.at(list, middle_index)
     end
-
 
     # sum of the middle page number from the correctly-ordered updates
     def part_1(file_path) do
@@ -51,12 +62,19 @@ defmodule Day05 do
             end)
     end
 
-    def part_2(_) do
-      "TBD"
+    # sum of the middle page number from the fixed updates
+    def part_2(file_path) do
+        {rules, updates} = read_file(file_path)
+
+        get_incorrect_updates({rules, updates})
+            |> Enum.map(&fix_update(&1, rules))
+            |> Enum.reduce(0, fn update, acc ->
+                String.to_integer(get_middle_page(update)) + acc
+            end)
     end
 end
 
 IO.puts("Part 1 - example: #{Day05.part_1("example.txt")}")
 IO.puts("Part 1 - input: #{Day05.part_1("input.txt")}")
-# IO.puts("Part 2 - example: #{Day05.part_2("example.txt")}")
-# IO.puts("Part 2 - input: #{Day05.part_2("input.txt")}")
+IO.puts("Part 2 - example: #{Day05.part_2("example.txt")}")
+IO.puts("Part 2 - input: #{Day05.part_2("input.txt")}")

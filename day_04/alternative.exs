@@ -1,14 +1,14 @@
 defmodule Day04 do
   defp read_file(file_path) do
-      File.stream!(file_path)
-          |> Enum.map(&String.trim/1)
+    File.stream!(file_path)
+    |> Enum.map(&String.trim/1)
   end
 
   defp count_xmas_words_in_line(line) do
-      result = Regex.scan(~r/XMAS/, line)
-      result_rev = Regex.scan(~r/SAMX/, line)
+    result = Regex.scan(~r/XMAS/, line)
+    result_rev = Regex.scan(~r/SAMX/, line)
 
-      length(result) + length(result_rev)
+    length(result) + length(result_rev)
   end
 
   defp count(lines) do
@@ -16,64 +16,74 @@ defmodule Day04 do
   end
 
   defp horizontal_to_diagonal(line, acc, offset) do
-      Stream.with_index(line, offset)
-          |> Enum.reduce(acc, fn {v,k}, acc ->
-              if acc[k] == nil do
-                  Map.put(acc, k, [v])
-              else
-                  %{acc | k => [v| acc[k]]}
-              end
-          end)
+    Stream.with_index(line, offset)
+    |> Enum.reduce(acc, fn {v, k}, acc ->
+      if acc[k] == nil do
+        Map.put(acc, k, [v])
+      else
+        %{acc | k => [v | acc[k]]}
+      end
+    end)
   end
 
   defp vertical_lines(input) do
-      input
-          |> Enum.map(&String.graphemes(&1))
-          |> Enum.zip() # Transpose
-          |> Enum.map(&Tuple.to_list(&1) |> Enum.join())
+    input
+    |> Enum.map(&String.graphemes(&1))
+    # Transpose
+    |> Enum.zip()
+    |> Enum.map(&(Tuple.to_list(&1) |> Enum.join()))
   end
 
   defp diagonal_left_lines(input) do
-      input
-          |> Enum.map(&String.graphemes(&1))
-          |> Enum.reduce({%{}, 0}, fn line, {map, counter} -> { horizontal_to_diagonal(line, map, counter), counter+1 } end)
-          |> (fn {map, _} -> Map.values(map) end).()
-          |> Enum.map(&Enum.join(&1))
+    input
+    |> Enum.map(&String.graphemes(&1))
+    |> Enum.reduce({%{}, 0}, fn line, {map, counter} ->
+      {horizontal_to_diagonal(line, map, counter), counter + 1}
+    end)
+    |> (fn {map, _} -> Map.values(map) end).()
+    |> Enum.map(&Enum.join(&1))
   end
 
   defp diagonal_right_lines(input) do
-      input
-          |> Enum.map(&String.graphemes(&1))
-          |> Enum.map(&Enum.reverse(&1))
-          |> Enum.zip() # Transpose
-          |> Enum.map(&Tuple.to_list(&1))
-          |> Enum.reduce({%{}, 0}, fn line, {map, counter} -> { horizontal_to_diagonal(line, map, counter), counter+1 } end)
-          |> (fn {map, _} -> Map.values(map) end).()
-          |> Enum.map(&Enum.join(&1))
+    input
+    |> Enum.map(&String.graphemes(&1))
+    |> Enum.map(&Enum.reverse(&1))
+    # Transpose
+    |> Enum.zip()
+    |> Enum.map(&Tuple.to_list(&1))
+    |> Enum.reduce({%{}, 0}, fn line, {map, counter} ->
+      {horizontal_to_diagonal(line, map, counter), counter + 1}
+    end)
+    |> (fn {map, _} -> Map.values(map) end).()
+    |> Enum.map(&Enum.join(&1))
   end
 
   def count_xmas_words(file_path) do
-      input = read_file(file_path)
+    input = read_file(file_path)
 
-      num_h = input
-          |> count()
+    num_h =
+      input
+      |> count()
 
-      num_v = input
-          |> vertical_lines()
-          |> count()
+    num_v =
+      input
+      |> vertical_lines()
+      |> count()
 
-      num_dl = input
-          |> diagonal_left_lines()
-          |> count()
+    num_dl =
+      input
+      |> diagonal_left_lines()
+      |> count()
 
-      num_dr = input
-          |> diagonal_right_lines()
-          |> count()
+    num_dr =
+      input
+      |> diagonal_right_lines()
+      |> count()
 
-      num_h + num_v + num_dl + num_dr
+    num_h + num_v + num_dl + num_dr
   end
 
-  def part_2() do
+  def part_2(_args) do
     "TBD"
   end
 end

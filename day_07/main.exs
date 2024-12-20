@@ -15,35 +15,61 @@ defmodule Day07 do
     end)
   end
 
-  defp combination(acc, list) do
+  defp add(a, b) do
+    a + b
+  end
+
+  defp multiply(a, b) do
+    a * b
+  end
+
+  defp join(a, b) do
+    (Integer.to_string(a) <> Integer.to_string(b))
+    |> String.to_integer()
+  end
+
+  defp calculate(acc, list, operators) do
     if list == [] do
       acc
     else
       [head | tail] = list
-      [combination(acc + head, tail), combination(acc * head, tail)]
+
+      Enum.map(operators, fn operator ->
+        calculate(operator.(acc, head), tail, operators)
+      end)
     end
   end
 
-  def part_1(file_path) do
-    read_file(file_path)
-    |> Enum.map(fn {total, values} ->
-      {total, combination(hd(values), tl(values)) |> List.flatten()}
-    end)
-    |> Enum.reduce(0, fn {total, values}, acc ->
-      if total in values do
-        acc + total
-      else
-        acc
-      end
-    end)
+  defp calculate_total_calibration(list) do
+    Enum.reduce(list, 0, fn {total, _}, acc -> acc + total end)
   end
 
-  def part_2(_args) do
-    "TBD"
+  defp valid_equation?({total, values}, operators) do
+    possible_values =
+      calculate(hd(values), tl(values), operators)
+      |> List.flatten()
+
+    total in possible_values
+  end
+
+  def part_1(file_path) do
+    operators = [&add/2, &multiply/2]
+
+    read_file(file_path)
+    |> Enum.filter(&valid_equation?(&1, operators))
+    |> calculate_total_calibration()
+  end
+
+  def part_2(file_path) do
+    operators = [&add/2, &multiply/2, &join/2]
+
+    read_file(file_path)
+    |> Enum.filter(&valid_equation?(&1, operators))
+    |> calculate_total_calibration()
   end
 end
 
 IO.puts("Part 1 - example: #{Day07.part_1("example.txt")}")
 IO.puts("Part 1 - input: #{Day07.part_1("input.txt")}")
-# IO.puts("Part 2 - example: #{Day07.part_2("example.txt")}")
-# IO.puts("Part 2 - input: #{Day07.part_2("example.txt")}")
+IO.puts("Part 2 - example: #{Day07.part_2("example.txt")}")
+IO.puts("Part 2 - input: #{Day07.part_2("input.txt")}")

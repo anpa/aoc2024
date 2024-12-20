@@ -42,14 +42,16 @@ defmodule Day06 do
     defp move(map, pos, dir, visited) do
       {yn, xn} = next_coord(pos, dir)
 
-      if map[yn][xn] == nil do
-        visited
-      else
-        if map[yn][xn] == "#" do
+      cond do
+        # guard is exiting the map
+        map[yn][xn] == nil ->
+            visited
+        # obstacle
+        map[yn][xn] == "#" ->
             move(map, pos, next_dir(dir), visited)
-        else
+        # move
+        true ->
             move(map, {yn,xn}, dir, [{yn,xn} | visited])
-        end
       end
     end
 
@@ -96,17 +98,17 @@ defmodule Day06 do
               true
             # obstacle
             dir_n != dir ->
-                stuck_in_loop?(map, obstacle_pos, pos, dir_n, update_visited(visited, pos, dir_n))
+                stuck_in_loop?(map, obstacle_pos, pos, dir_n, update_visited(visited, pos, dir))
             # move
             true ->
-                stuck_in_loop?(map, obstacle_pos, {yn,xn}, dir, update_visited(visited, {yn,xn}, dir))
+                stuck_in_loop?(map, obstacle_pos, {yn,xn}, dir, visited)
         end
     end
 
     def part_2(file_path) do
         map = read_file(file_path)
         {yi, xi} = get_start_coords(map)
-        visited = %{{yi,xi} => ["up"]}
+        visited = %{}
         dir = "up"
 
         # place obstacle in one of the future guard positions
